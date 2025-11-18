@@ -14,14 +14,16 @@
 <img width="1215" height="954" alt="2" src="https://github.com/user-attachments/assets/44208b07-2591-4804-bcaf-7a1e6a64a090" />
 
 2. `Установил все необходимые обновления и пакеты:`
-    ```sudo apt update
-     sudo apt install -y nano python3 haproxy
+    ```
+    sudo apt update
+    sudo apt install -y nano python3 haproxy
     ```
 
 3. `Создаю две директории и разные страницы`
-    ```sudo mkdir -p /var/www/py1 /var/www/py2
-      echo "Hello from PY1" | sudo tee /var/www/py1/index.html
-      echo "Hello from PY2" | sudo tee /var/www/py2/index.html
+    ```
+    sudo mkdir -p /var/www/py1 /var/www/py2
+    echo "Hello from PY1" | sudo tee /var/www/py1/index.html
+    echo "Hello from PY2" | sudo tee /var/www/py2/index.html
     ```
 
 
