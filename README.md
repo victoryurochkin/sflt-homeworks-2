@@ -135,33 +135,43 @@ echo "Hello from PY8103" | sudo tee /var/www/py8103/index.html
 ```
 <img width="889" height="221" alt="7" src="https://github.com/user-attachments/assets/c161472c-c86c-452a-802b-8fde7d88d7f0" />
 
-2. `Запускаем 3 сервера
-Открой 3 терминала/сессии (или tmux/screen).
-Терминал 1:`
+2. `Запускаем 3 сервера - 3 терминала/сессии (или tmux/screen).`
+`Терминал 1:`
 ```
 cd /var/www/py8101
 python3 -m http.server 8101
 ```
+
 <img width="739" height="110" alt="8" src="https://github.com/user-attachments/assets/43587ed5-306e-48ea-ab18-53023b196c27" />
+
 `Терминал 2:`
+
 ```
 cd /var/www/py8102
 python3 -m http.server 8102
 ```
+
 <img width="739" height="110" alt="9" src="https://github.com/user-attachments/assets/f4e02472-8359-4243-a83a-64b9388135b5" />
+
 `Терминал 3:`
+
 ```
 cd /var/www/py8103
 python3 -m http.server 8103
 ```
+
 <img width="739" height="110" alt="10" src="https://github.com/user-attachments/assets/9235358d-2c4a-44ea-8e5f-f642d079432d" />
+
 `Проверим, что поднялись`
+
 ```
 curl http://127.0.0.1:8101
 curl http://127.0.0.1:8102
 curl http://127.0.0.1:8103
 ```
+
 <img width="457" height="170" alt="11" src="https://github.com/user-attachments/assets/befc4654-5ea2-4ac6-a3fd-929d753105df" />
+
 
 3. `Доменное имя example.local
 Чтобы HAProxy мог отфильтровать трафик по домену, добавим его в /etc/hosts`
