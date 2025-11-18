@@ -10,14 +10,25 @@
 
 1. `На своём домашнем (сервере) гипервизове proxmox, "поднял" виртуалку с ubuntu server 22.04`
 <img width="484" height="771" alt="1" src="https://github.com/user-attachments/assets/621b4f91-2c6d-4170-a7b4-1b4d7de46404" />
-ншот 1)
+
+<img width="1215" height="954" alt="2" src="https://github.com/user-attachments/assets/44208b07-2591-4804-bcaf-7a1e6a64a090" />
+
+2. `Установил все необходимые обновления и пакеты:`
+    ```sudo apt update
+     sudo apt install -y nano python3 haproxy
+    ```
+
+3. `Создаю две директории и разные страницы`
+    ```sudo mkdir -p /var/www/py1 /var/www/py2
+      echo "Hello from PY1" | sudo tee /var/www/py1/index.html
+      echo "Hello from PY2" | sudo tee /var/www/py2/index.html
+    ```
 
 
-2. `Заполните здесь этапы выполнения, если требуется ....`
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
+
 5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
+6. `Заполните здесь этапы выполнения, если требуется ....`
+7. 
 
 ```
 Поле для вставки кода...
