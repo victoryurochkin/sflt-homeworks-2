@@ -6,7 +6,7 @@
 Настройте балансировку Round-robin на 4 уровне.
 На проверку направьте конфигурационный файл haproxy, скриншоты, где видно перенаправление запросов на разные серверы при обращении к HAProxy.
 
-`Решение`
+`**Решение**`
 
 1. `На своём домашнем (сервере) гипервизове proxmox, "поднял" виртуалку с ubuntu server 22.04`
 <img width="484" height="771" alt="1" src="https://github.com/user-attachments/assets/621b4f91-2c6d-4170-a7b4-1b4d7de46404" />
@@ -14,41 +14,115 @@
 <img width="1215" height="954" alt="2" src="https://github.com/user-attachments/assets/44208b07-2591-4804-bcaf-7a1e6a64a090" />
 
 2. `Установил все необходимые обновления и пакеты:`
-    ```
-    sudo apt update
-    sudo apt install -y nano python3 haproxy
-    ```
+```
+sudo apt update
+sudo apt install -y nano python3 haproxy
+```
 
 3. `Создаю две директории и разные страницы`
-    ```
-    sudo mkdir -p /var/www/py1 /var/www/py2
-    echo "Hello from PY1" | sudo tee /var/www/py1/index.html
-    echo "Hello from PY2" | sudo tee /var/www/py2/index.html
-    ```
-
-
-
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. `Заполните здесь этапы выполнения, если требуется ....`
-7. 
-
 ```
-Поле для вставки кода...
-....
-....
-....
-....
+sudo mkdir -p /var/www/py1 /var/www/py2
+echo "Hello from PY1" | sudo tee /var/www/py1/index.html
+echo "Hello from PY2" | sudo tee /var/www/py2/index.html
 ```
 
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота 1](ссылка на скриншот 1)`
+4. `Запускаем два простых HTTP-сервера
+В первой вкладке/сессии:`
 
+```
+cd /var/www/py1
+python3 -m http.server 8001
+```
+<img width="746" height="307" alt="3" src="https://github.com/user-attachments/assets/6a03728e-8bd1-4089-983e-0fa625efcc40" />
+
+`Во второй вкладке/сессии:`
+```
+cd /var/www/py2
+python3 -m http.server 8002
+```
+<img width="746" height="144" alt="4" src="https://github.com/user-attachments/assets/1eab4335-1155-45db-83be-f76bd5c91312" />
+
+5. `Проверяю, что "поднялось:`
+```
+curl http://127.0.0.1:8001
+curl http://127.0.0.1:8002
+
+```
+<img width="468" height="190" alt="5" src="https://github.com/user-attachments/assets/2810f272-b52a-4eb1-a24b-365128299d19" />
+
+6. `Конфигурация HAProxy (L4, round-robin)`
+
+```
+nano /etc/haproxy/haproxy.cfg
+```
+```
+global
+    log /dev/log local0
+    log /dev/log local1 notice
+    user haproxy
+    group haproxy
+    daemon
+    stats socket /run/haproxy/admin.sock mode 660 level admin
+    stats timeout 30s
+
+defaults
+    log     global
+    mode    tcp               # L4 (TCP)
+    option  dontlognull
+    timeout connect 5s
+    timeout client  50s
+    timeout server  50s
+
+# Веб-страница (статистика)
+listen stats
+    mode http
+    bind :888
+    stats enable
+    stats uri /stats
+    stats refresh 5s
+    stats realm Haproxy\ Statistics
+
+# TCP-балансировка round-robin между двумя Python-серверами
+listen web_tcp
+    mode tcp
+    bind :1325
+    balance roundrobin
+    option tcp-check
+
+    server s1 127.0.0.1:8001 check inter 3s
+    server s2 127.0.0.1:8002 check inter 3s
+```
+`Проверка синтаксиса`
+```
+sudo haproxy -c -f /etc/haproxy/haproxy.cfg
+```
+`Если всё ок`
+`Перезапустим службу`
+```
+sudo systemctl restart haproxy
+sudo systemctl status haproxy
+```
+7. `Проверка балансировки`
+
+`Для наглядности выполню команду несколько раз:`
+```
+curl http://127.0.0.1:8080
+curl http://127.0.0.1:8080
+curl http://127.0.0.1:8080
+curl http://127.0.0.1:8080
+```
+`Так же в конфиге я учел статистику, что бы посмотреть, что это действительно работает и вызовы чередуются`
+```
+curl http://127.0.0.1:1325
+```
+<img width="483" height="604" alt="6" src="https://github.com/user-attachments/assets/71451383-37aa-4369-a493-4347c05019af" />
 
 ---
 
-### Задание 2
+### Задание 2 Запустите три simple python сервера на своей виртуальной машине на разных портах
+Настройте балансировку Weighted Round Robin на 7 уровне, чтобы первый сервер имел вес 2, второй - 3, а третий - 4 HAproxy должен балансировать только тот http-трафик, который адресован домену example.local На проверку направьте конфигурационный файл haproxy, скриншоты, где видно перенаправление запросов на разные серверы при обращении к HAProxy c использованием домена example.local и без него.
 
-`Приведите ответ в свободной форме........`
+`**Решение**`
 
 1. `Заполните здесь этапы выполнения, если требуется ....`
 2. `Заполните здесь этапы выполнения, если требуется ....`
