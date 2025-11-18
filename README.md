@@ -123,68 +123,100 @@ curl http://127.0.0.1:1325
 Настройте балансировку Weighted Round Robin на 7 уровне, чтобы первый сервер имел вес 2, второй - 3, а третий - 4 HAproxy должен балансировать только тот http-трафик, который адресован домену example.local На проверку направьте конфигурационный файл haproxy, скриншоты, где видно перенаправление запросов на разные серверы при обращении к HAProxy c использованием домена example.local и без него.
 
 `**Решение**`
+`делаем на той же VM`
 
-1. `Заполните здесь этапы выполнения, если требуется ....`
-2. `Заполните здесь этапы выполнения, если требуется ....`
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
-
+1. `Три simple Python-сервера
+Сделаем порты 8101, 8102, 8103`
 ```
-Поле для вставки кода...
-....
-....
-....
-....
+mkdir -p /var/www/py8101 /var/www/py8102 /var/www/py8103
+echo "Hello from PY8101" | sudo tee /var/www/py8101/index.html
+echo "Hello from PY8102" | sudo tee /var/www/py8102/index.html
+echo "Hello from PY8103" | sudo tee /var/www/py8103/index.html
 ```
+<img width="889" height="221" alt="7" src="https://github.com/user-attachments/assets/c161472c-c86c-452a-802b-8fde7d88d7f0" />
 
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота 2](ссылка на скриншот 2)`
-
-
----
-
-### Задание 3
-
-`Приведите ответ в свободной форме........`
-
-1. `Заполните здесь этапы выполнения, если требуется ....`
-2. `Заполните здесь этапы выполнения, если требуется ....`
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
-
+2. `Запускаем 3 сервера
+Открой 3 терминала/сессии (или tmux/screen).
+Терминал 1:`
 ```
-Поле для вставки кода...
-....
-....
-....
-....
+cd /var/www/py8101
+python3 -m http.server 8101
 ```
-
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота](ссылка на скриншот)`
-
-### Задание 4
-
-`Приведите ответ в свободной форме........`
-
-1. `Заполните здесь этапы выполнения, если требуется ....`
-2. `Заполните здесь этапы выполнения, если требуется ....`
-3. `Заполните здесь этапы выполнения, если требуется ....`
-4. `Заполните здесь этапы выполнения, если требуется ....`
-5. `Заполните здесь этапы выполнения, если требуется ....`
-6. 
-
+<img width="739" height="110" alt="8" src="https://github.com/user-attachments/assets/43587ed5-306e-48ea-ab18-53023b196c27" />
+`Терминал 2:`
 ```
-Поле для вставки кода...
-....
-....
-....
-....
+cd /var/www/py8102
+python3 -m http.server 8102
 ```
+<img width="739" height="110" alt="9" src="https://github.com/user-attachments/assets/f4e02472-8359-4243-a83a-64b9388135b5" />
+`Терминал 3:`
+```
+cd /var/www/py8103
+python3 -m http.server 8103
+```
+<img width="739" height="110" alt="10" src="https://github.com/user-attachments/assets/9235358d-2c4a-44ea-8e5f-f642d079432d" />
+`Проверим, что поднялись`
+```
+curl http://127.0.0.1:8101
+curl http://127.0.0.1:8102
+curl http://127.0.0.1:8103
+```
+<img width="457" height="170" alt="11" src="https://github.com/user-attachments/assets/befc4654-5ea2-4ac6-a3fd-929d753105df" />
 
-`При необходимости прикрепитe сюда скриншоты
-![Название скриншота](ссылка на скриншот)`
+3. `Доменное имя example.local
+Чтобы HAProxy мог отфильтровать трафик по домену, добавим его в /etc/hosts`
+```
+echo "127.0.0.1 example.local" | sudo tee -a /etc/hosts
+```
+`и сразу проверим, что он отвечает`
+```
+ping -c 1 example.local
+```
+<img width="848" height="234" alt="12" src="https://github.com/user-attachments/assets/4a867cdb-de37-443a-9ac3-9c29e8de9c74" />
+
+
+5. `Настройка HAProxy — Weighted Round Robin на L7
+Я дополню свой текущий /etc/haproxy/haproxy.cfg, не ломая задание 1.
+Мы уже знаем, что там есть global, defaults, listen stats, listen web_tcp. Оставляем всё как есть и ниже добавляем новые секции frontend и backend.`
+```
+nano /etc/haproxy/haproxy.cfg
+```
+`добавляем в самый низ файла`
+```
+frontend fe_example_local
+    mode http
+    bind *:8080
+
+    acl host_example_local hdr_beg(host) -i example.local
+    use_backend be_example_local if host_example_local
+
+backend be_example_local
+    mode http
+    balance roundrobin
+
+    # Weighted Round Robin: веса 2, 3, 4
+    server py1 127.0.0.1:8101 weight 2 check
+    server py2 127.0.0.1:8102 weight 3 check
+    server py3 127.0.0.1:8103 weight 4 check
+```
+`проверим конфиг и перезапустим службу`
+```
+haproxy -c -f /etc/haproxy/haproxy.cfg
+sudo systemctl restart haproxy
+sudo systemctl status haproxy
+```
+<img width="1439" height="510" alt="13" src="https://github.com/user-attachments/assets/9b6abec5-fbb5-4262-a5c6-af32bfd2b3b1" />
+
+6. `Проверка балансировки:`
+```
+curl http://example.local:8080/
+curl http://example.local:8080/
+curl http://example.local:8080/
+curl http://example.local:8080/
+curl http://example.local:8080/
+```
+`без домена`
+```
+curl http://127.0.0.1:8080/
+```
+<img width="601" height="349" alt="14" src="https://github.com/user-attachments/assets/74c6a1e9-8c30-4de0-b80f-f3da86a9e0e7" />
